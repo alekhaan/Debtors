@@ -9,72 +9,153 @@ import SwiftUI
 
 struct CurrentDebtors: View {
     @EnvironmentObject var debtorStore: DebtorStore
-    @State private var showAllDebtors = false
-    @State private var addNewDebtor = false
-    
-    var dateFormatter: DateFormatter {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "dd.MM.yyyy"
-        return formatter
+
+    @State private var searchText: String = ""
+    @State private var showAdd = false
+    @State private var showNPS = false
+
+    private var activeDebtors: [Debtor] {
+        debtorStore.debtors
+            .map { debtor in
+                Debtor(
+                    id: debtor.id,
+                    name: debtor.name,
+                    debts: debtor.debts.filter { $0.isActive }
+                )
+            }
+            .filter { !$0.debts.isEmpty }
     }
-    
+
+    private var totalActiveAmount: Double {
+        activeDebtors.reduce(0) { partial, debtor in
+            partial + debtor.debts.filter { $0.isActive }.reduce(0) { $0 + $1.totalAmount }
+        }
+    }
+
     var body: some View {
-        NavigationView {
-            VStack {
-                List(debtorStore.debtors.filter { debtor in debtor.debts.contains(where: { $0.isActive })}) { debtor in
-                    DisclosureGroup {
-                        ForEach(debtor.debts.filter { $0.isActive }) { debt in
-                            VStack {
-                                HStack {
-                                    Text("Текущая сумма: \(String(format: "%.2f", debt.totalAmount))")
-                                        .font(.body)
-                                    Spacer()
-                                    Text("\(String(debt.percent))%")
-                                        .font(.body)
-                                }
-                                HStack {
-                                    Text("Взятие долга: \(dateFormatter.string(from: debt.loanDate))")
-                                        .font(.body)
-                                    Spacer()
-                                }
-                                HStack {
-                                    Text("Следующее начисление процента: \(dateFormatter.string(from: debt.nextPaymentDate))")
-                                        .font(.body)
-                                    Spacer()
-                                }
+        NavigationStack {
+            VStack(spacing: 12) {
+                headerCard
+
+                if activeDebtors.isEmpty {
+                    emptyState
+                } else {
+                    List {
+                        ForEach(activeDebtors) { debtor in
+                            NavigationLink(destination: DebtorView(debtorId: debtor.id)) {
+                                debtorRow(debtor)
                             }
-                            .swipeActions {
-                                Button(action: {
-                                    debtorStore.deactivateDebt(debt, from: debtor)
-                                }) {
-                                    Label("Завершить", systemImage: "banknote")
-                                }
-                                .tint(.green)
-                            }
-                        }
-                    } label: {
-                        HStack {
-                            Text(debtor.name)
-                                .font(.headline)
-                            Spacer()
-                            Text(String(format: "%.2f", debtor.debts.filter { $0.isActive }.reduce(0) { $0 + $1.totalAmount }))
-                                .font(.body)
                         }
                     }
+                    .listStyle(.insetGrouped)
                 }
-                .navigationBarTitle("Список должников").font(.title)
-                
-                NavigationLink(destination: CreateNewDebtor().environmentObject(debtorStore), label: {
-                    Text("Добавить")
-                })
-                .buttonStyle(.borderedProminent)
-                
-                NavigationLink(destination: AllDebtors().environmentObject(debtorStore), label: {
-                    Text("Показать всех")
-                })
-                .buttonStyle(.bordered)
+            }
+            .navigationTitle("Активные долги")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showAdd = true
+                    } label: {
+                        Image(systemName: "plus.circle.fill")
+                    }
+                }
+            }
+            .searchable(text: $searchText, prompt: "Поиск по имени")
+            .sheet(isPresented: $showAdd) {
+                NavigationStack {
+                    CreateNewDebtor()
+                        .environmentObject(debtorStore)
+                        .navigationTitle("Добавить долг")
+                        .navigationBarTitleDisplayMode(.inline)
+                }
+            }
+            .sheet(isPresented: $showNPS) {
+                NPSPromptView(store: debtorStore)
             }
         }
+    }
+
+    private var headerCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Сводка")
+                .font(.headline)
+
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Активных должников")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text("\(activeDebtors.count)")
+                        .font(.title3).bold()
+                }
+                Spacer()
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text("Сумма активных долгов")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text(AppTheme.currency(totalActiveAmount))
+                        .font(.title3).bold()
+                }
+            }
+        }
+        .padding()
+        .background(AppTheme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
+        .padding(.horizontal)
+        .padding(.top, 8)
+    }
+
+    private func debtorRow(_ debtor: Debtor) -> some View {
+        let activeDebts = debtor.debts.filter { $0.isActive }
+        let sum = activeDebts.reduce(0) { $0 + $1.totalAmount }
+        let nextDate = activeDebts.map { $0.nextPaymentDate }.min() ?? Date()
+
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(debtor.name)
+                    .font(.headline)
+                Spacer()
+                Text(AppTheme.currency(sum))
+                    .font(.subheadline).bold()
+            }
+            HStack(spacing: 10) {
+                Label("\(activeDebts.count)", systemImage: "banknote")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Label(AppTheme.dateFormatter.string(from: nextDate), systemImage: "calendar")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.vertical, 6)
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "tray")
+                .font(.system(size: 42))
+                .foregroundStyle(.secondary)
+            Text("Пока нет активных долгов")
+                .font(.headline)
+            Text("Добавьте должника и сумму, чтобы приложение начало вести учёт и напоминать о начислении процентов.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+
+            Button {
+                showAdd = true
+            } label: {
+                Text("Добавить долг")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .padding(.horizontal, 32)
+
+            Spacer(minLength: 0)
+        }
+        .padding(.top, 24)
     }
 }
 

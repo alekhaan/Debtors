@@ -8,11 +8,11 @@
 import SwiftUI
 
 struct CreateNewDebtor: View {
-    @Environment(\.presentationMode) var presentationMode
-    
+    @Environment(\.dismiss) private var dismiss
+
     let percents = [0, 1, 5, 10, 20, 50]
     let periods = [1, 7, 30, 90, 365]
-    
+
     @EnvironmentObject var debtorStore: DebtorStore
     @State private var debtorName: String = ""
     @State private var selectedDebtor: Debtor?
@@ -21,123 +21,148 @@ struct CreateNewDebtor: View {
     @State private var selectedPeriod = 1
     @State private var loanDate: Date = Date()
     @State private var comment: String = ""
+
     @State private var showAlert = false
-    @State private var activeAlert: ActiveAlert = .wrongData
+    @State private var alertText = "Введите корректные данные"
     @State private var filteredDebtors: [Debtor] = []
-    
-    func addDebtor() -> Bool {
-        if debtorName.isEmpty && debtAmount.isEmpty {
-            self.activeAlert = .wrongData
-            self.showAlert = true
-            return false
-        }
 
-        guard let amount = Double(debtAmount),
-              amount.isFinite,
-              amount > 0
-        else {
-            self.activeAlert = .wrongData
-            self.showAlert = true
-            return false
-        }
+    private func parseAmount(_ s: String) -> Double? {
+        let trimmed = s.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
 
-        if let existingDebtor = selectedDebtor {
-            let newDebt = Debt(amount: amount, percent: selectedPercent, period: selectedPeriod, loanDate: loanDate, comment: comment, isActive: true)
-            debtorStore.addDebt(newDebt, to: existingDebtor)
-        } else {
-            let newDebtor = Debtor(name: debtorName, debts: [Debt(amount: amount, percent: selectedPercent, period: selectedPeriod, loanDate: loanDate, comment: comment, isActive: true)])
-            debtorStore.addDebtor(newDebtor)
-        }
-
-        // очистка полей — ок
-        debtorName = ""
-        selectedDebtor = nil
-        debtAmount = ""
-        selectedPercent = 1
-        selectedPeriod = 1
-        loanDate = Date()
-        comment = ""
-
-        return true
+        // Поддержка “1,23” и “1.23”
+        let normalized = trimmed.replacingOccurrences(of: ",", with: ".")
+        return Double(normalized)
     }
-    
+
+    private func addDebtor() {
+        let name = debtorName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else {
+            alertText = "Введите имя должника"
+            showAlert = true
+            return
+        }
+
+        guard let amount = parseAmount(debtAmount), amount.isFinite, amount > 0 else {
+            alertText = "Введите сумму долга больше 0"
+            showAlert = true
+            return
+        }
+
+        // Заём не должен быть “в будущем” — иначе nextPaymentDate / начисления будут странными
+        if loanDate > Date() {
+            alertText = "Дата взятия долга не может быть в будущем"
+            showAlert = true
+            return
+        }
+
+        let newDebt = Debt(amount: amount,
+                           percent: selectedPercent,
+                           period: selectedPeriod,
+                           loanDate: loanDate,
+                           comment: comment,
+                           isActive: true)
+
+        if let existing = selectedDebtor {
+            debtorStore.addDebt(newDebt, to: existing)
+            Analytics.shared.event("debt_added_existing")
+        } else {
+            let newDebtor = Debtor(name: name, debts: [newDebt])
+            debtorStore.addDebtor(newDebtor)
+            Analytics.shared.event("debtor_created_and_debt_added")
+        }
+
+        dismiss()
+    }
+
     var body: some View {
         Form {
-            Section(header: Text("Данные должника")) {
+            Section("Данные должника") {
                 TextField("Имя должника", text: $debtorName)
+                    .textInputAutocapitalization(.words)
                     .onChange(of: debtorName) { newName in
-                        if !newName.isEmpty {
-                            filteredDebtors = debtorStore.debtors.filter ({ $0.name.localizedCaseInsensitiveContains(newName) })
+                        if let selected = selectedDebtor,
+                           selected.name.caseInsensitiveCompare(newName) == .orderedSame {
+                            filteredDebtors = []
+                            return
+                        }
+
+                        if !newName.trimmingCharacters(in: .whitespaces).isEmpty {
+                            filteredDebtors = debtorStore.debtors
+                                .filter {
+                                    $0.name.localizedCaseInsensitiveContains(newName) && $0.id != selectedDebtor?.id
+                                }
                         } else {
                             filteredDebtors = []
                         }
                     }
+
+
                 if !filteredDebtors.isEmpty {
-                    Text("Похожие имена:")
-                        .font(.headline)
-                    ForEach(filteredDebtors.prefix(5)) { debtor in
-                        Button(action: {
-                            selectedDebtor = debtor
-                            debtorName = debtor.name
-                        }) {
-                            Text(debtor.name)
-                        }
-                    }
-                }
-                
-                TextField("Сумма долга", text: $debtAmount).keyboardType(.decimalPad)
-                
-                HStack {
-                    Picker("Процент", selection: $selectedPercent) {
-                        ForEach(percents, id: \.self) { percent in
-                            Text("\(percent)%")
-                        }
-                    }
-                    .fixedSize(horizontal: true, vertical: true)
-                    
-                    Spacer()
-                    
-                    Picker("Период", selection: $selectedPeriod) {
-                        ForEach(periods, id: \.self) { period in
-                            switch period {
-                            case 1:
-                                Text("1 день")
-                            case 7:
-                                Text("1 неделя")
-                            case 30:
-                                Text("1 месяц")
-                            case 90:
-                                Text("3 месяца")
-                            case 365:
-                                Text("1 год")
-                            default:
-                                Text("")
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Похожие имена")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        ForEach(filteredDebtors.prefix(5)) { debtor in
+                            Button {
+                                selectedDebtor = debtor
+                                debtorName = debtor.name
+                            } label: {
+                                HStack {
+                                    Image(systemName: "person.crop.circle")
+                                    Text(debtor.name)
+                                    Spacer()
+                                    Text("выбрать")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
                             }
                         }
                     }
-                    .fixedSize(horizontal: true, vertical: true)
                 }
+
+                TextField("Сумма долга", text: $debtAmount)
+                    .keyboardType(.decimalPad)
+
+                Picker("Процент", selection: $selectedPercent) {
+                    ForEach(percents, id: \.self) { p in
+                        Text("\(p)%").tag(p)
+                    }
+                }
+
+                Picker("Период начисления", selection: $selectedPeriod) {
+                    ForEach(periods, id: \.self) { period in
+                        Text(periodTitle(period)).tag(period)
+                    }
+                }
+
                 DatePicker("Дата взятия долга", selection: $loanDate, displayedComponents: .date)
-                TextField("Комментарий", text: $comment)
+                TextField("Комментарий (необязательно)", text: $comment)
             }
-            
-            Button("Добавить") {
-                let ok = addDebtor()
-                if ok {
-                    presentationMode.wrappedValue.dismiss()
-                }
-            }
-        }
-        .alert(isPresented: $showAlert) {
-            switch activeAlert {
-            case .wrongData:
-                return Alert(title: Text("Ошибка"), message: Text("Введите корректные данные"))
-            case .successfulAdd:
-                return Alert(title: Text("Должник добавлен"))
+
+            Button {
+                addDebtor()
+            } label: {
+                Text("Сохранить")
+                    .frame(maxWidth: .infinity)
             }
         }
-        
-        Spacer()
+        .alert("Ошибка", isPresented: $showAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(alertText)
+        }
+    }
+
+    private func periodTitle(_ period: Int) -> String {
+        switch period {
+        case 1: return "1 день"
+        case 7: return "1 неделя"
+        case 30: return "1 месяц"
+        case 90: return "3 месяца"
+        case 365: return "1 год"
+        default: return "Период: \(period)"
+        }
     }
 }
 

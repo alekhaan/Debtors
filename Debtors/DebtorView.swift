@@ -9,39 +9,95 @@ import SwiftUI
 
 struct DebtorView: View {
     @EnvironmentObject var debtorStore: DebtorStore
-    let debtor: Debtor
-    
-    var dateFormatter: DateFormatter {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "dd.MM.yyyy"
-        return formatter
+    let debtorId: UUID
+
+    private var debtor: Debtor? {
+        debtorStore.debtors.first(where: { $0.id == debtorId })
     }
-    
+
+    private var totalTaken: Double {
+        (debtor?.debts ?? []).reduce(0) { $0 + ($1.paidAmount ?? $1.totalAmount) }
+    }
+
+    private var activeSum: Double {
+        (debtor?.debts ?? []).filter { $0.isActive }.reduce(0) { $0 + $1.totalAmount }
+    }
+
     var body: some View {
-        List {
-            Text("Всего взято на: \(String(format: "%0.2f", debtor.debts.reduce(0) { $0 + ($1.paidAmount ?? $1.totalAmount) }))")
-            Section {
-                ForEach(debtor.debts, content: { debt in
-                    DebtView(debt: debt)
-                        .opacity(debt.isActive ? 1.0 : 0.6)
-                        .swipeActions(content: {
-                            Button(action: {
-                                debtorStore.removeDebt(debt, from: debtor)
-                            }) {
-                                Label("Удалить", systemImage: "trash")
+        Group {
+            if let debtor {
+                List {
+                    Section {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Сводка по должнику")
+                                .font(.headline)
+
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Активно")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                    Text(AppTheme.currency(activeSum))
+                                        .font(.title3).bold()
+                                }
+                                Spacer()
+                                VStack(alignment: .trailing, spacing: 4) {
+                                    Text("Всего взято")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                    Text(AppTheme.currency(totalTaken))
+                                        .font(.title3).bold()
+                                }
                             }
-                            .tint(.red)
-                        })
-                })
+                        }
+                        .padding(.vertical, 6)
+                    }
+
+                    Section("Долги") {
+                        ForEach(debtor.debts) { debt in
+                            DebtView(debt: debt)
+                                .opacity(debt.isActive ? 1.0 : 0.55)
+                                .swipeActions {
+                                    if debt.isActive {
+                                        Button {
+                                            debtorStore.deactivateDebt(debt, from: debtor)
+                                        } label: {
+                                            Label("Закрыть", systemImage: "checkmark.seal")
+                                        }
+                                        .tint(.green)
+                                    }
+
+                                    Button(role: .destructive) {
+                                        debtorStore.removeDebt(debt, from: debtor)
+                                    } label: {
+                                        Label("Удалить", systemImage: "trash")
+                                    }
+                                }
+                        }
+                    }
+                }
+                .listStyle(.insetGrouped)
+                .navigationTitle(debtor.name)
+                .navigationBarTitleDisplayMode(.inline)
+            } else {
+                if #available(iOS 17.0, *) {
+                    ContentUnavailableView("Должник не найден", systemImage: "person.crop.circle.badge.exclamationmark")
+                } else {
+                    // Fallback on earlier versions
+                }
             }
         }
-        .navigationBarTitle(debtor.name)
     }
 }
 
 struct DebtorView_Previews: PreviewProvider {
     static var previews: some View {
-        let debtorStore = DebtorStore()
-        return DebtorView(debtor: Debtor(name: "Alex", debts: [Debt(amount: 500, percent: 1, period: 1, loanDate: Date(), comment: "", isActive: true)])).environmentObject(debtorStore)
+        let store = DebtorStore()
+        let d = Debtor(name: "Alex", debts: [Debt(amount: 500, percent: 1, period: 1, loanDate: Date(), comment: "", isActive: true)])
+        store.addDebtor(d)
+        return NavigationStack {
+            DebtorView(debtorId: d.id)
+        }
+        .environmentObject(store)
     }
 }

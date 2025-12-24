@@ -13,11 +13,19 @@ struct DebtorsApp: App {
 
     var body: some Scene {
         WindowGroup {
-            CurrentDebtors()
+            DebtorsHomeView()
                 .environmentObject(debtorStore)
                 .onAppear {
                     debtorStore.requestNotificationPermission()
                     debtorStore.scheduleNotifications()
+
+                    #if canImport(MetricKit)
+                    if #available(iOS 13.0, *) {
+                        MetricsKitBridge.shared.start()
+                    }
+                    #endif
+
+                    Analytics.shared.event("app_started")
                 }
         }
     }

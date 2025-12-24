@@ -9,24 +9,43 @@ import SwiftUI
 
 struct AllDebtors: View {
     @EnvironmentObject var debtorStore: DebtorStore
-    
+    @State private var searchText: String = ""
+
+    private var filtered: [Debtor] {
+        if searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return debtorStore.debtors
+        }
+        return debtorStore.debtors.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+    }
+
     var body: some View {
-        List {
-            ForEach(debtorStore.debtors) { debtor in
-                NavigationLink(destination: DebtorView(debtor: debtor)) {
-                    Text(debtor.name)
-                }
-                .swipeActions {
-                    Button(action: {
-                        debtorStore.removeDebtor(debtor)
-                    }) {
-                        Label("Удалить", systemImage: "trash")
+        NavigationStack {
+            List {
+                ForEach(filtered) { debtor in
+                    NavigationLink(destination: DebtorView(debtorId: debtor.id)) {
+                        HStack {
+                            Text(debtor.name)
+                                .font(.headline)
+                            Spacer()
+                            let total = debtor.debts.reduce(0) { $0 + ($1.paidAmount ?? $1.totalAmount) }
+                            Text(AppTheme.currency(total))
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.vertical, 6)
                     }
-                    .tint(.red)
+                    .swipeActions {
+                        Button(role: .destructive) {
+                            debtorStore.removeDebtor(debtor)
+                        } label: {
+                            Label("Удалить", systemImage: "trash")
+                        }
+                    }
                 }
             }
+            .listStyle(.insetGrouped)
+            .navigationTitle("Все должники")
+            .searchable(text: $searchText, prompt: "Поиск по имени")
         }
-        .navigationTitle("Все должники")
     }
 }
 

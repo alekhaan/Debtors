@@ -9,49 +9,91 @@ import SwiftUI
 
 struct DebtView: View {
     let debt: Debt
-    
-    var dateFormatter: DateFormatter {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "dd.MM.yyyy"
-        return formatter
-    }
-    
+
     var body: some View {
-        VStack {
+        VStack(alignment: .leading, spacing: 10) {
             HStack {
-                if debt.isActive {
-                    Text("Активная сумма: \(String(format: "%0.2f", debt.totalAmount))")
-                } else {
-                    Text("Выплаченная сумма \(dateFormatter.string(from: debt.closeDate ?? Date())): \(String(format: "%0.2f", debt.paidAmount ?? debt.totalAmount))")
-                }
+                Text(debt.isActive ? "Активный долг" : "Закрытый долг")
+                    .font(.caption)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(debt.isActive ? Color.green.opacity(0.15) : Color.gray.opacity(0.15))
+                    .clipShape(Capsule())
+
                 Spacer()
-            }
-            HStack {
-                Text("Сумма взятия: \(String(format: "%0.2f", debt.amount))")
-                Spacer()
+
                 Text("\(debt.percent)%")
+                    .font(.headline)
             }
+
             HStack {
-                Text("Дата взятия: \(dateFormatter.string(from: debt.loanDate))")
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(debt.isActive ? "Текущая сумма" : "Выплачено")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    let total = debt.isActive ? debt.totalAmount : (debt.paidAmount ?? debt.totalAmount)
+                    Text(AppTheme.currency(total))
+                        .font(.title3).bold()
+                }
                 Spacer()
-                switch debt.period {
-                case 1:
-                    Text("Период: 1 день")
-                case 7:
-                    Text("Период: 1 неделя")
-                case 30:
-                    Text("Период: 1 месяц")
-                case 90:
-                    Text("Период: 3 месяца")
-                case 365:
-                    Text("Период: 1 год")
-                default:
-                    Text("Без периода, потому что ты его любишь")
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("Сумма взятия")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text(AppTheme.currency(debt.amount))
+                        .font(.subheadline).bold()
                 }
             }
-            if (!debt.comment.isEmpty) {
-                Text("Комментарий: " + debt.comment)
+
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Label("Взято: \(AppTheme.dateFormatter.string(from: debt.loanDate))", systemImage: "calendar")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                }
+
+                if debt.isActive {
+                    HStack {
+                        Label("Следующее начисление: \(AppTheme.dateFormatter.string(from: debt.nextPaymentDate))", systemImage: "clock")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                    }
+                } else if let close = debt.closeDate {
+                    HStack {
+                        Label("Закрыто: \(AppTheme.dateFormatter.string(from: close))", systemImage: "checkmark.circle")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                    }
+                }
+
+                HStack {
+                    Label(periodTitle(debt.period), systemImage: "arrow.triangle.2.circlepath")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                }
+
+                if !debt.comment.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Text("Комментарий: \(debt.comment)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
+        }
+        .padding(.vertical, 8)
+    }
+
+    private func periodTitle(_ period: Int) -> String {
+        switch period {
+        case 1: return "Период: 1 день"
+        case 7: return "Период: 1 неделя"
+        case 30: return "Период: 1 месяц"
+        case 90: return "Период: 3 месяца"
+        case 365: return "Период: 1 год"
+        default: return "Период: \(period)"
         }
     }
 }

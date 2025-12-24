@@ -7,6 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4644916B2EFC7AD800EC1CF3 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4644916A2EFC7AD800EC1CF3 /* AppTheme.swift */; };
+		4644916D2EFC7AE000EC1CF3 /* Analytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4644916C2EFC7AE000EC1CF3 /* Analytics.swift */; };
+		4644916F2EFC7AE800EC1CF3 /* MetricsKitBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4644916E2EFC7AE800EC1CF3 /* MetricsKitBridge.swift */; };
+		464491712EFC7AF000EC1CF3 /* FeedbackManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 464491702EFC7AF000EC1CF3 /* FeedbackManager.swift */; };
+		464491732EFC7AF800EC1CF3 /* NPSPromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 464491722EFC7AF800EC1CF3 /* NPSPromptView.swift */; };
+		464491752EFC7B0400EC1CF3 /* DebtorsHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 464491742EFC7B0400EC1CF3 /* DebtorsHomeView.swift */; };
+		464491772EFC7B0E00EC1CF3 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 464491762EFC7B0E00EC1CF3 /* SettingsView.swift */; };
+		464491792EFC813500EC1CF3 /* ToastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 464491782EFC813500EC1CF3 /* ToastView.swift */; };
 		46EEFBEC2A54369800CC54F5 /* DebtorsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46EEFBEB2A54369800CC54F5 /* DebtorsApp.swift */; };
 		46EEFBF02A54369900CC54F5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 46EEFBEF2A54369900CC54F5 /* Assets.xcassets */; };
 		46EEFBF32A54369900CC54F5 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 46EEFBF22A54369900CC54F5 /* Preview Assets.xcassets */; };
@@ -22,6 +30,14 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		4644916A2EFC7AD800EC1CF3 /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
+		4644916C2EFC7AE000EC1CF3 /* Analytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Analytics.swift; sourceTree = "<group>"; };
+		4644916E2EFC7AE800EC1CF3 /* MetricsKitBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetricsKitBridge.swift; sourceTree = "<group>"; };
+		464491702EFC7AF000EC1CF3 /* FeedbackManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedbackManager.swift; sourceTree = "<group>"; };
+		464491722EFC7AF800EC1CF3 /* NPSPromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NPSPromptView.swift; sourceTree = "<group>"; };
+		464491742EFC7B0400EC1CF3 /* DebtorsHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebtorsHomeView.swift; sourceTree = "<group>"; };
+		464491762EFC7B0E00EC1CF3 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		464491782EFC813500EC1CF3 /* ToastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastView.swift; sourceTree = "<group>"; };
 		46EEFBE82A54369800CC54F5 /* Debtors.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Debtors.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		46EEFBEB2A54369800CC54F5 /* DebtorsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebtorsApp.swift; sourceTree = "<group>"; };
 		46EEFBEF2A54369900CC54F5 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -67,6 +83,14 @@
 		46EEFBEA2A54369800CC54F5 /* Debtors */ = {
 			isa = PBXGroup;
 			children = (
+				464491782EFC813500EC1CF3 /* ToastView.swift */,
+				464491762EFC7B0E00EC1CF3 /* SettingsView.swift */,
+				464491742EFC7B0400EC1CF3 /* DebtorsHomeView.swift */,
+				464491722EFC7AF800EC1CF3 /* NPSPromptView.swift */,
+				464491702EFC7AF000EC1CF3 /* FeedbackManager.swift */,
+				4644916E2EFC7AE800EC1CF3 /* MetricsKitBridge.swift */,
+				4644916C2EFC7AE000EC1CF3 /* Analytics.swift */,
+				4644916A2EFC7AD800EC1CF3 /* AppTheme.swift */,
 				46FB25A32A5437E600FDA9AB /* Alerts.swift */,
 				46FB25AB2A54382800FDA9AB /* AllDebtors.swift */,
 				46FB25B32A54388E00FDA9AB /* CreateNewDebtor.swift */,
@@ -119,7 +143,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1430;
-				LastUpgradeCheck = 1430;
+				LastUpgradeCheck = 1620;
 				TargetAttributes = {
 					46EEFBE72A54369800CC54F5 = {
 						CreatedOnToolsVersion = 14.3.1;
@@ -162,14 +186,22 @@
 			buildActionMask = 2147483647;
 			files = (
 				46FB25B42A54388E00FDA9AB /* CreateNewDebtor.swift in Sources */,
+				4644916B2EFC7AD800EC1CF3 /* AppTheme.swift in Sources */,
+				464491712EFC7AF000EC1CF3 /* FeedbackManager.swift in Sources */,
+				4644916D2EFC7AE000EC1CF3 /* Analytics.swift in Sources */,
+				4644916F2EFC7AE800EC1CF3 /* MetricsKitBridge.swift in Sources */,
+				464491772EFC7B0E00EC1CF3 /* SettingsView.swift in Sources */,
 				46FB25AA2A54381800FDA9AB /* DebtorStore.swift in Sources */,
 				46FB25AC2A54382800FDA9AB /* AllDebtors.swift in Sources */,
+				464491752EFC7B0400EC1CF3 /* DebtorsHomeView.swift in Sources */,
 				46FB25A62A5437F600FDA9AB /* Debt.swift in Sources */,
+				464491732EFC7AF800EC1CF3 /* NPSPromptView.swift in Sources */,
 				46FB25B22A54387600FDA9AB /* CurrentDebtors.swift in Sources */,
 				46FB25A42A5437E600FDA9AB /* Alerts.swift in Sources */,
 				46EEFBEC2A54369800CC54F5 /* DebtorsApp.swift in Sources */,
 				46FB25AE2A54385400FDA9AB /* DebtView.swift in Sources */,
 				46FB25B02A54386600FDA9AB /* DebtorView.swift in Sources */,
+				464491792EFC813500EC1CF3 /* ToastView.swift in Sources */,
 				46FB25A82A54380700FDA9AB /* Debtor.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -213,6 +245,7 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -273,6 +306,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
