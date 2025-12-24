@@ -2,13 +2,13 @@
 
 **Debtors** is an iOS application built with SwiftUI for tracking debtors and their loans.  
 It allows users to store debt information, automatically calculate interest,
-and receive notifications when interest is applied.
+and receive notifications about upcoming interest accruals.
 
 ---
 
 ## 🚀 Features
 
-- Add debtors and multiple debts for each debtor
+- Add debtors and manage multiple debts for each debtor
 - Support for interest rates with different accrual periods:
   - daily
   - weekly
@@ -16,44 +16,72 @@ and receive notifications when interest is applied.
   - quarterly
   - yearly
 - Automatic calculation of the current total debt amount
-- Closing a debt with фиксацией the paid amount
-- Notifications for upcoming interest accrual dates
-- Local data storage using `UserDefaults`
-- Modern user interface built with SwiftUI
+- Ability to close a debt with the paid amount recorded
+- Local notifications before interest is applied
+- Local data persistence using `UserDefaults`
+- Clean and modern user interface built with SwiftUI
 
 ---
 
 ## 🧱 Project Architecture
 
-The project is built using the **MVVM architecture** and `ObservableObject`.
+The project follows the **MVVM architecture** pattern and makes use of `ObservableObject`
+for state management.
 
 ### Core Models
 
 - `Debtor` — represents a debtor (name and list of debts)
-- `Debt` — represents a debt (amount, interest rate, period, dates, and status)
+- `Debt` — represents a single debt, including:
+  - initial amount
+  - interest rate
+  - accrual period
+  - loan date
+  - calculated total amount
+  - status (active / closed)
 
-### Data Storage
+---
 
-- `DebtorStore`
-  - Manages debtors and debts
-  - Persists data using `UserDefaults`
-  - Schedules local notifications via `UserNotifications`
+## 🗄️ Data & Business Logic
 
-### Views (SwiftUI)
+### DebtorStore
 
-- `CurrentDebtors` — displays active debts
-- `AllDebtors` — shows all debtors
-- `CreateNewDebtor` — form for adding a debtor or a debt
-- `DebtorView` — detailed view of a specific debtor
+- Central data store for all debtors and debts
+- Handles:
+  - adding and removing debtors
+  - adding, closing, and deleting debts
+  - automatic recalculation of debt amounts
+- Persists data locally using `UserDefaults`
+- Schedules local notifications for active debts
+
+### NotificationManager
+
+- Encapsulates notification scheduling logic
+- Creates local notifications to remind users
+  about upcoming interest increases
+
+---
+
+## 🎨 User Interface (SwiftUI Views)
+
+- `CurrentDebtors` — displays all active debts grouped by debtor
+- `AllDebtors` — list of all debtors
+- `CreateNewDebtor` — form for creating a new debtor or adding a debt
+- `DebtorView` — detailed view of a debtor and all associated debts
+- `DebtView` — reusable view for displaying a single debt:
+  - active or closed state
+  - dates, interest rate, and calculated amounts
+  - optional user comments
 
 ---
 
 ## 🔔 Notifications
 
-The app uses `UNUserNotificationCenter` to remind users
-about upcoming interest accrual dates for active debts.
+The app uses `UNUserNotificationCenter` to notify users
+about upcoming interest accruals for active debts.
 
 Notification permission is requested on the first app launch.
+
+Notifications are scheduled automatically based on the debt’s accrual period.
 
 ---
 
@@ -69,6 +97,6 @@ Notification permission is requested on the first app launch.
 
 ## 📦 Installation & Run
 
-1. Clone the repository:
+Clone the repository:
    ```bash
    git clone https://github.com/USERNAME/Debtors.git
